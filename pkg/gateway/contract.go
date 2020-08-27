@@ -54,6 +54,17 @@ func (c *Contract) EvaluateTransaction(name string, args ...string) ([]byte, err
 	return txn.Evaluate(args...)
 }
 
+func (c *Contract) EvaluateTransactionWithBytes(name string, args ...[]byte) ([]byte, error) {
+	txn, err := c.CreateTransaction(name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return txn.EvaluateWithBytes(args...)
+
+}
+
 // SubmitTransaction will submit a transaction to the ledger. The transaction function 'name'
 // will be evaluated on the endorsing peers and then submitted to the ordering service
 // for committing to the ledger.
@@ -71,6 +82,16 @@ func (c *Contract) SubmitTransaction(name string, args ...string) ([]byte, error
 	}
 
 	return txn.Submit(args...)
+}
+
+func (c *Contract) SubmitTransactionWithBytes(name string, args ...[]byte) ([]byte, error) {
+	txn, err := c.CreateTransaction(name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return txn.SubmitWithBytes(args...)
 }
 
 // CreateTransaction creates an object representing a specific invocation of a transaction

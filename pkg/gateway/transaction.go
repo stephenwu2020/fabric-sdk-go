@@ -98,6 +98,23 @@ func (txn *Transaction) Evaluate(args ...string) ([]byte, error) {
 	return response.Payload, nil
 }
 
+func (txn *Transaction) EvaluateWithBytes(bytes ...[]byte) ([]byte, error) {
+	txn.request.Args = bytes
+
+	var options []channel.RequestOption
+	options = append(options, channel.WithTimeout(fab.Query, txn.contract.network.gateway.options.Timeout))
+
+	response, err := txn.contract.client.Query(
+		*txn.request,
+		options...,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to evaluate")
+	}
+
+	return response.Payload, nil
+}
+
 // Submit a transaction to the ledger. The transaction function represented by this object
 // will be evaluated on the endorsing peers and then submitted to the ordering service
 // for committing to the ledger.
@@ -106,6 +123,27 @@ func (txn *Transaction) Submit(args ...string) ([]byte, error) {
 	for i, v := range args {
 		bytes[i] = []byte(v)
 	}
+	txn.request.Args = bytes
+
+	var options []channel.RequestOption
+	if txn.endorsingPeers != nil {
+		options = append(options, channel.WithTargetEndpoints(txn.endorsingPeers...))
+	}
+	options = append(options, channel.WithTimeout(fab.Execute, txn.contract.network.gateway.options.Timeout))
+
+	response, err := txn.contract.client.InvokeHandler(
+		newSubmitHandler(txn.eventch),
+		*txn.request,
+		options...,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to submit")
+	}
+
+	return response.Payload, nil
+}
+
+func (txn *Transaction) SubmitWithBytes(bytes ...[]byte) ([]byte, error) {
 	txn.request.Args = bytes
 
 	var options []channel.RequestOption
