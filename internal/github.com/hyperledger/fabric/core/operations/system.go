@@ -222,7 +222,8 @@ func (s *System) startMetricsTickers() error {
 		go goCollector.CollectAndPublish(s.collectorTicker.C)
 
 		s.sendTicker = time.NewTicker(writeInterval)
-		go s.statsd.SendLoop(s.sendTicker.C, network, address)
+		ctx := context.Background()
+		go s.statsd.SendLoop(ctx, s.sendTicker.C, network, address)
 	}
 
 	return nil
